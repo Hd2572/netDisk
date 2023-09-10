@@ -1,0 +1,2 @@
+# netDisk
+QT、TCPscoket、SQLite
