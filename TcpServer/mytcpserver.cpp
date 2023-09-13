@@ -2,7 +2,7 @@
 
 MyTcpServer::MyTcpServer() {}
 
-MyTcpServer& MyTcpServer::getInstance()
+MyTcpServer& MyTcpServer::getInstance()  //返回同一个静态的对象
 {
     static MyTcpServer instance;
     return instance;

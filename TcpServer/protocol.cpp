@@ -1,4 +1,3 @@
-
 #include "protocol.h"
 
 PDU* mkPDU(uint uiMsgLen)  //申请空间
