@@ -2,7 +2,7 @@
 
 PDU* mkPDU(uint uiMsgLen)  //申请空间
 {
-    uint uiPDULen = sizeof(PDU) + uiMsgLen;  //前面大小不变
+    uint uiPDULen = sizeof(PDU) + uiMsgLen;  //前面大小不变+消息大小
     PDU* pdu = (PDU*)malloc(uiPDULen);
 
     if (NULL == pdu)

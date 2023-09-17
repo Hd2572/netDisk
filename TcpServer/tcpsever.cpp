@@ -6,7 +6,7 @@ TcpSever::TcpSever(QWidget* parent) : QWidget(parent), ui(new Ui::TcpSever)
 {
     ui->setupUi(this);
     loadConfig();                                                        //加载配置文件
-    MyTcpServer::getInstance().listen(QHostAddress(m_strIP), m_usport);  //创建一个自定义的tcpserver对象，并监听端口
+    MyTcpServer::getInstance().listen(QHostAddress(m_strIP), m_usport);  //创建一个单例的tcpserver对象，并监听端口
 }
 
 TcpSever::~TcpSever() { delete ui; }

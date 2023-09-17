@@ -4,6 +4,7 @@
 #include <QDebug>
 #include <QList>
 #include <QTcpServer>
+#include <QThread>
 
 #include "mytcpsocket.h"
 /*
@@ -19,6 +20,9 @@ class MyTcpServer : public QTcpServer
     MyTcpServer();
     static MyTcpServer& getInstance();                  //一个静态的mytcpserver对象
     void incomingConnection(qintptr socketDescriptor);  //重载父类虚函数,检测到connect自动调用
+
+  public slots:
+    void deleteSocket(MyTcpSocket* mysocket);  //删除已有socket
 
   private:
     QList<MyTcpSocket*> m_tcpSockeList;  //已有socket指针列表
