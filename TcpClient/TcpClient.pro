@@ -28,14 +28,23 @@ CONFIG += c++11
 SOURCES += \
         main.cpp \
         tcpclient.cpp \
-    protocol.cpp
+    protocol.cpp \
+    opewidget.cpp \
+    online.cpp \
+    friend.cpp \
+    book.cpp
 
 HEADERS += \
         tcpclient.h \
-    protocol.h
+    protocol.h \
+    opewidget.h \
+    online.h \
+    friend.h \
+    book.h
 
 FORMS += \
-        tcpclient.ui
+        tcpclient.ui \
+    online.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
