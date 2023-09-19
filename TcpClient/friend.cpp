@@ -1,5 +1,8 @@
 #include "friend.h"
 
+#include "protocol.h"
+#include "tcpclient.h"
+
 Friend::Friend(QWidget* parent) : QWidget(parent)
 {
     m_pShowMsgTE = new QTextEdit;           //显示信息
@@ -39,7 +42,16 @@ Friend::Friend(QWidget* parent) : QWidget(parent)
 
     setLayout(pMain);  //设置总的布局
 
-    connect(m_pShowOnlineUsrPB, SIGNAL(clicked(bool)), this, SLOT(showOnline()));
+    connect(m_pShowOnlineUsrPB, SIGNAL(clicked(bool)), this, SLOT(showOnline()));  //显示在线用户槽
+}
+
+void Friend::showAllOnlineUsr(PDU* pdu)  //展示在线
+{
+    if (NULL == pdu)
+    {
+        return;
+    }
+    m_pOnline->showUsr(pdu);
 }
 
 void Friend::showOnline()  //显示/隐藏在线用户
@@ -47,6 +59,12 @@ void Friend::showOnline()  //显示/隐藏在线用户
     if (m_pOnline->isHidden())
     {
         m_pOnline->show();
+
+        PDU* pdu = mkPDU(0);
+        pdu->uiMsgType = ENUM_MSG_TYPE_ALL_ONLINE_REQUEST;
+        TcpClient::getInstance().getTcpSocket().write((char*)pdu, pdu->uiPDULen);  //发送查询请求
+        // qDebug() << "friend 请求" << pdu->uiMsgType;
+        free(pdu);
     }
     else
     {

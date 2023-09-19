@@ -17,6 +17,8 @@ class OpeWidget : public QWidget
     Q_OBJECT
   public:
     explicit OpeWidget(QWidget* parent = nullptr);
+    static OpeWidget& getInstance();  //返回单例
+    Friend* getFriend();              //获得好友界面
 
   signals:
 

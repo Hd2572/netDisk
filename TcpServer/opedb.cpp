@@ -87,3 +87,17 @@ void OpeDB::handleOffline(const char* name)  //处理用户下线
     QSqlQuery query;
     query.exec(data);  //执行语句
 }
+
+QStringList OpeDB::handleAllOnline()  //查找所有在线用户
+{
+    QString data = QString("select name from usrInfo where online=1");  // 查询在线
+
+    QSqlQuery query;
+    query.exec(data);  //执行语句
+    QStringList result;
+    result.clear();
+
+    while (query.next()) { result.append(query.value(0).toString()); }
+
+    return result;
+}

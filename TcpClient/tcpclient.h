@@ -2,7 +2,7 @@
 #define TCPCLIENT_H
 
 /*
-    客户端
+    客户端登录窗口
 */
 
 #include <QByteArray>
@@ -13,6 +13,7 @@
 #include <QTcpSocket>
 #include <QWidget>
 
+#include "opewidget.h"
 #include "protocol.h"
 
 namespace Ui
@@ -28,7 +29,10 @@ class TcpClient : public QWidget
     explicit TcpClient(QWidget* parent = nullptr);
     ~TcpClient();
 
-    void loadConfig();  //加载配置文件
+    void loadConfig();                //加载配置文件
+    static TcpClient& getInstance();  //单例
+    QTcpSocket& getTcpSocket();       //返回socket
+
   public slots:
     void showConnect();  //连接成功弹窗
     void recvMsg();      //

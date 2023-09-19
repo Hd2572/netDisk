@@ -40,6 +40,17 @@ void TcpClient::loadConfig()  //加载配置文件
     }
 }
 
+TcpClient& TcpClient::getInstance()  //单例
+{
+    static TcpClient instance;
+    return instance;
+}
+
+QTcpSocket& TcpClient::getTcpSocket()  //返回socket
+{
+    return m_tcpSocket;
+}
+
 void TcpClient::showConnect()  //连接成功弹窗
 {
     QMessageBox::information(this, "连接服务器", "连接服务器成功");
@@ -52,6 +63,8 @@ void TcpClient::recvMsg()  //接收数据
     uint uiMsgLen = uiPDULen - sizeof(PDU);                                //数据大小
     PDU* pdu = mkPDU(uiMsgLen);                                            //创建新pdu
     m_tcpSocket.read((char*)pdu + sizeof(uint), uiPDULen - sizeof(uint));  //读数据
+
+    //qDebug() << pdu->uiMsgType << endl;
 
     switch (pdu->uiMsgType)  //判断消息类型
     {
@@ -73,12 +86,20 @@ void TcpClient::recvMsg()  //接收数据
             if (strcmp(pdu->caData, LOGIN_OK) == 0)  //弹窗
             {
                 QMessageBox::information(this, "登录", LOGIN_OK);
+                OpeWidget::getInstance().show();  //跳转登录成功页面
+                this->hide();                     //隐藏登录界面
             }
             else if (strcmp(pdu->caData, LOGIN_FAILED) == 0)
             {
                 QMessageBox::warning(this, "登录", LOGIN_FAILED);
             }
 
+            break;
+        }
+        case ENUM_MSG_TYPE_ALL_ONLINE_RESPOND:  //在线用户回复
+        {
+            //qDebug() << 1111;
+            OpeWidget::getInstance().getFriend()->showAllOnlineUsr(pdu);  //传入信息
             break;
         }
         default: break;
@@ -152,5 +173,4 @@ void TcpClient::on_regist_pb_clicked()  //注册按钮
 
 void TcpClient::on_cancel_pb_clicked()  //注销按钮
 {
-
 }

@@ -22,14 +22,17 @@ enum ENUM_MSG_TYPE  //消息类型
     ENUM_MSG_TYPE_MIN = 0,
     ENUM_MSG_TYPE_REGIST_REQUEST,  //注册请求1
     ENUM_MSG_TYPE_REGIST_RESPOND,  //注册回复2
-    ENUM_MSG_TYPE_LOGIN_REQUEST,   //登录请求3
-    ENUM_MSG_TYPE_LOGIN_RESPOND,   //登录回复4
-                                   //    ENUM_MSG_TYPE_REQUEST = 0,
-                                   //    ENUM_MSG_TYPE_RESPOND = 0,
-                                   //    ENUM_MSG_TYPE_REQUEST = 0,
-                                   //    ENUM_MSG_TYPE_RESPOND = 0,
-                                   //    ENUM_MSG_TYPE_REQUEST = 0,
-                                   //    ENUM_MSG_TYPE_RESPOND = 0,
+
+    ENUM_MSG_TYPE_LOGIN_REQUEST,  //登录请求3
+    ENUM_MSG_TYPE_LOGIN_RESPOND,  //登录回复4
+
+    ENUM_MSG_TYPE_ALL_ONLINE_REQUEST,  //在线用户查询5
+    ENUM_MSG_TYPE_ALL_ONLINE_RESPOND,  //在线用户回复6
+
+    ENUM_MSG_TYPE_SEARCH_USR_REQUEST,  //搜索用户请求7
+    ENUM_MSG_TYPE_SEARCH_USR_RESPOND,  //搜索用户请求8
+                                       //    ENUM_MSG_TYPE_REQUEST = 0,
+                                       //    ENUM_MSG_TYPE_RESPOND = 0,
     ENUM_MSG_TYPE_MAX = 0x00ffffff,
 
 };

@@ -10,6 +10,7 @@
 #include <QWidget>
 
 #include "online.h"
+
 /*
         好友窗口
 
@@ -20,6 +21,7 @@ class Friend : public QWidget
     Q_OBJECT
   public:
     explicit Friend(QWidget* parent = nullptr);
+    void showAllOnlineUsr(PDU* pdu);  //展示在线
 
   signals:
 

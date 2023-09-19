@@ -79,6 +79,28 @@ void MyTcpSocket::recvMsg()  //接收readyread
             respdu = NULL;
             break;
         }
+        case ENUM_MSG_TYPE_ALL_ONLINE_REQUEST:  //查在线用户请求
+        {
+            QStringList ret = OpeDB::getInstance().handleAllOnline();  //查询
+            uint uiMsgLen = ret.size() * 32;
+
+            // qDebug() << "请求：" << pdu->uiMsgType;
+
+            PDU* respdu = mkPDU(uiMsgLen);  //回复pdu
+            respdu->uiMsgType = ENUM_MSG_TYPE_ALL_ONLINE_RESPOND;
+            for (int i = 0; i < ret.size(); i++)  //拷贝
+            {
+                memcpy((char*)respdu->caMsg + i * 32, ret.at(i).toStdString().c_str(), ret.at(i).size());
+            }
+            write((char*)respdu, respdu->uiPDULen);  // socket发送
+
+            // qDebug() << "回复：" << respdu->uiMsgType;
+
+            free(respdu);  //释放空间
+            respdu = NULL;
+
+            break;
+        }
         default: break;
     }
 

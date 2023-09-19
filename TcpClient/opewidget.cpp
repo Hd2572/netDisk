@@ -21,3 +21,14 @@ OpeWidget::OpeWidget(QWidget* parent) : QWidget(parent)
 
     connect(m_pListW, SIGNAL(currentRowChanged(int)), m_pSW, SLOT(setCurrentIndex(int)));  //根据左侧列表更换显示窗口
 }
+
+OpeWidget& OpeWidget::getInstance()  //返回单例
+{
+    static OpeWidget instance;
+    return instance;
+}
+
+Friend* OpeWidget::getFriend()  //获得好友页面
+{
+    return m_pFriend;
+}
