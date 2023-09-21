@@ -1,5 +1,7 @@
 #include "friend.h"
 
+#include <QInputDialog>
+
 #include "protocol.h"
 #include "tcpclient.h"
 
@@ -43,6 +45,7 @@ Friend::Friend(QWidget* parent) : QWidget(parent)
     setLayout(pMain);  //设置总的布局
 
     connect(m_pShowOnlineUsrPB, SIGNAL(clicked(bool)), this, SLOT(showOnline()));  //显示在线用户槽
+    connect(m_pSearchUsrPB, SIGNAL(clicked(bool)), this, SLOT(searchUsr()));       //搜索用户
 }
 
 void Friend::showAllOnlineUsr(PDU* pdu)  //展示在线
@@ -69,5 +72,21 @@ void Friend::showOnline()  //显示/隐藏在线用户
     else
     {
         m_pOnline->hide();
+    }
+}
+
+void Friend::searchUsr()  //搜索用户
+{
+    m_strSearchName = QInputDialog::getText(this, "搜索", "用户名:");  //用户名输入弹窗
+    if (!m_strSearchName.isEmpty())
+    {
+        // qDebug() << m_strSearchName;
+        PDU* pdu = mkPDU(0);
+        memcpy(pdu->caData, m_strSearchName.toStdString().c_str(), m_strSearchName.size());  //名字存入pdu
+        pdu->uiMsgType = ENUM_MSG_TYPE_SEARCH_USR_REQUEST;
+
+        TcpClient::getInstance().getTcpSocket().write((char*)pdu, pdu->uiPDULen);  //发送pdu
+        free(pdu);
+        pdu = NULL;
     }
 }

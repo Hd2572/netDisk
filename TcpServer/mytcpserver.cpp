@@ -28,6 +28,24 @@ void MyTcpServer::incomingConnection(qintptr socketDescriptor)  //有连接自�
     //    emit newConnection();  // 5
 }
 
+void MyTcpServer::resend(const char* pername, PDU* pdu)  //重新发送
+{
+    if (NULL == pername || NULL == pdu)  //判空
+    {
+        return;
+    }
+
+    QString strName = pername;
+    for (int i = 0; i < m_tcpSockeList.size(); i++)  //遍历已有socket找到目标
+    {
+        if (strName == m_tcpSockeList.at(i)->getName())  //找到目标
+        {
+            m_tcpSockeList.at(i)->write((char*)pdu, pdu->uiPDULen);  //发送
+            break;
+        }
+    }
+}
+
 void MyTcpServer::deleteSocket(MyTcpSocket* mysocket)  //删除已有socket
 {
     QList<MyTcpSocket*>::iterator iter = m_tcpSockeList.begin();  //找到目标socket删除
@@ -41,5 +59,5 @@ void MyTcpServer::deleteSocket(MyTcpSocket* mysocket)  //删除已有socket
             break;
         }
     }
-    for (int i = 0; i < m_tcpSockeList.size(); i++) { qDebug() << m_tcpSockeList.at(i)->getName(); }
+    for (int i = 0; i < m_tcpSockeList.size(); i++) { qDebug() << m_tcpSockeList.at(i)->getName(); }  //打印剩余socket
 }

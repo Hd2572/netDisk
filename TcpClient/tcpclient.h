@@ -33,6 +33,10 @@ class TcpClient : public QWidget
     static TcpClient& getInstance();  //单例
     QTcpSocket& getTcpSocket();       //返回socket
 
+    QString loginName();                  //返回当前登录用户名
+    QString curPath();                    //返回当前路径
+    void setCurPath(QString strCurPath);  //设置当前路径
+
   public slots:
     void showConnect();  //连接成功弹窗
     void recvMsg();      //
@@ -52,6 +56,11 @@ class TcpClient : public QWidget
     quint16 m_usport;  //端口
 
     QTcpSocket m_tcpSocket;  //套接字对象，连接服务器、与服务器交互
+
+    QString m_strLoginName;  //我的用户名
+
+    QString m_strCurPath;  //当前路径
+    QFile m_file;
 };
 
 #endif  // TCPCLIENT_H

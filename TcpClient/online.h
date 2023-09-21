@@ -23,6 +23,9 @@ class Online : public QWidget
 
     void showUsr(PDU* pdu);  //显示在线
 
+  private slots:
+    void on_addFriend_pb_clicked();  //添加好友
+
   private:
     Ui::Online* ui;
 };

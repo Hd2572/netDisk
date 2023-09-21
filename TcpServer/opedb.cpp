@@ -101,3 +101,92 @@ QStringList OpeDB::handleAllOnline()  //查找所有在线用户
 
     return result;
 }
+
+int OpeDB::handleSearchUsr(const char* name)  //查找用户
+{
+    if (NULL == name)  //判空
+    {
+        return -1;
+    }
+    QString data = QString("select online from usrInfo where name=\'%1\'").arg(name);  //查找
+
+    QSqlQuery query;
+    query.exec(data);
+    if (query.next())  //接收数据
+    {
+        int ret = query.value(0).toInt();
+        if (1 == ret)  //在线
+        {
+            return 1;
+        }
+        else if (0 == ret)  //离线
+        {
+            return 0;
+        }
+    }
+    else  //没找到
+    {
+        return -1;
+    }
+}
+
+int OpeDB::handleAddFriend(const char* pername, const char* name)  //处理添加好友
+{
+    if (NULL == pername || NULL == name)  //判空
+    {
+        return -1;
+    }
+    QString data = QString("select * from friend where (id=(select id from usrInfo where name=\'%1\') and friendId = "
+                           "(select id from usrInfo where name=\'%2\')) "
+                           "or (id=(select id from usrInfo where name=\'%3\') and friendId = (select id from usrInfo "
+                           "where name=\'%4\'))")
+                       .arg(pername)
+                       .arg(name)
+                       .arg(name)
+                       .arg(pername);  //查询是否已有好友
+
+    // qDebug() << data;
+
+    QSqlQuery query;
+    query.exec(data);
+    if (query.next())
+    {
+        return 0;  //双方已经是好友
+    }
+    else
+    {
+        data = QString("select online from usrInfo where name=\'%1\'").arg(pername);  //查对方是否在线
+        QSqlQuery query;
+        query.exec(data);
+        if (query.next())
+        {
+            int ret = query.value(0).toInt();
+            if (1 == ret)
+            {
+                return 1;  //在线
+            }
+            else if (0 == ret)
+            {
+                return 2;  //用户不在线
+            }
+        }
+        else
+        {
+            return 3;  //用户不存在
+        }
+    }
+}
+
+void OpeDB::handleAgreeAddFriend(const char* pername, const char* name)  //同意加好友
+{
+    if (NULL == pername || NULL == name)  //判空
+    {
+        return;
+    }
+    QString data = QString("insert into friend(id, friendId) values((select id from usrInfo where name=\'%1\'), "
+                           "(select id from usrInfo where name=\'%2\'))")  //插入好友信息
+                       .arg(pername)
+                       .arg(name);
+    QSqlQuery query;
+    query.exec(data);
+}

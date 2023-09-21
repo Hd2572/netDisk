@@ -51,6 +51,21 @@ QTcpSocket& TcpClient::getTcpSocket()  //返回socket
     return m_tcpSocket;
 }
 
+QString TcpClient::loginName()  //返回当前登录用户名
+{
+    return m_strLoginName;
+}
+
+QString TcpClient::curPath()  //返回当前路径
+{
+    return m_strCurPath;
+}
+
+void TcpClient::setCurPath(QString strCurPath)  //设置当前路径
+{
+    m_strCurPath = strCurPath;
+}
+
 void TcpClient::showConnect()  //连接成功弹窗
 {
     QMessageBox::information(this, "连接服务器", "连接服务器成功");
@@ -64,7 +79,7 @@ void TcpClient::recvMsg()  //接收数据
     PDU* pdu = mkPDU(uiMsgLen);                                            //创建新pdu
     m_tcpSocket.read((char*)pdu + sizeof(uint), uiPDULen - sizeof(uint));  //读数据
 
-    //qDebug() << pdu->uiMsgType << endl;
+    // qDebug() << pdu->uiMsgType << endl;
 
     switch (pdu->uiMsgType)  //判断消息类型
     {
@@ -98,8 +113,70 @@ void TcpClient::recvMsg()  //接收数据
         }
         case ENUM_MSG_TYPE_ALL_ONLINE_RESPOND:  //在线用户回复
         {
-            //qDebug() << 1111;
+            // qDebug() << 1111;
             OpeWidget::getInstance().getFriend()->showAllOnlineUsr(pdu);  //传入信息
+            break;
+        }
+        case ENUM_MSG_TYPE_SEARCH_USR_RESPOND:  //搜索用户
+        {
+            if (0 == strcmp(SEARCH_USR_NO, pdu->caData))  //用户不存在
+            {
+                QMessageBox::information(
+                    this, "搜索", QString("%1: not exist").arg(OpeWidget::getInstance().getFriend()->m_strSearchName));
+            }
+            else if (0 == strcmp(SEARCH_USR_ONLINE, pdu->caData))  //在线
+            {
+                QMessageBox::information(
+                    this, "搜索", QString("%1: online").arg(OpeWidget::getInstance().getFriend()->m_strSearchName));
+            }
+            else if (0 == strcmp(SEARCH_USR_OFFLINE, pdu->caData))  //离线
+            {
+                QMessageBox::information(
+                    this, "搜索", QString("%1: offline").arg(OpeWidget::getInstance().getFriend()->m_strSearchName));
+            }
+            case ENUM_MSG_TYPE_ADD_FRIEND_REQUEST:  //加好友申请
+            {
+                char caName[32] = {'\0'};
+                strncpy(caName, pdu->caData + 32, 32);  //申请方用户名
+                // qDebug() << "申请方：" << caName << endl;
+                int ret =
+                    QMessageBox::information(this, "添加好友", QString("%1 want to add you as friend ?").arg(caName),
+                                             QMessageBox::Yes, QMessageBox::No);  //弹出提示框
+
+                PDU* respdu = mkPDU(0);                   //回复pdu
+                memcpy(respdu->caData, pdu->caData, 64);  //申请方回复方用户名
+                if (QMessageBox::Yes == ret)              //同意
+                {
+                    respdu->uiMsgType = ENUM_MSG_TYPE_ADD_FRIEND_AGGREE;  //同意加好友
+                }
+                else
+                {
+                    respdu->uiMsgType = ENUM_MSG_TYPE_ADD_FRIEND_REFUSE;  //拒绝加好友
+                }
+                m_tcpSocket.write((char*)respdu, respdu->uiPDULen);  //发给服务器
+                free(respdu);
+                respdu = NULL;
+                break;
+            }
+            case ENUM_MSG_TYPE_ADD_FRIEND_RESPOND:  //加好友回复
+            {
+                QMessageBox::information(this, "添加好友", pdu->caData);  //提示框
+                break;
+            }
+            case ENUM_MSG_TYPE_ADD_FRIEND_AGGREE:  //对方同意加好友
+            {
+                char caPerName[32] = {'\0'};
+                memcpy(caPerName, pdu->caData, 32);                                                    //对方名
+                QMessageBox::information(this, "添加好友", QString("添加%1好友成功").arg(caPerName));  //提示框
+                break;
+            }
+            case ENUM_MSG_TYPE_ADD_FRIEND_REFUSE:  //对方拒绝加好友
+            {
+                char caPerName[32] = {'\0'};
+                memcpy(caPerName, pdu->caData, 32);
+                QMessageBox::information(this, "添加好友", QString("添加%1好友失败").arg(caPerName));
+                break;
+            }
             break;
         }
         default: break;
@@ -133,8 +210,10 @@ void TcpClient::on_login_pb_clicked()  //登录按钮
 {
     QString strName = ui->name_le->text();  //获取用户名密码
     QString strPwd = ui->pwd_le->text();
+
     if (!strName.isEmpty() && !strPwd.isEmpty())
     {
+        m_strLoginName = strName;  //保存我的用户名
         PDU* pdu = mkPDU(0);
         pdu->uiMsgType = ENUM_MSG_TYPE_LOGIN_REQUEST;             //消息类型：登录请求
         strncpy(pdu->caData, strName.toStdString().c_str(), 32);  //将用户名密码存到caData
@@ -153,9 +232,11 @@ void TcpClient::on_login_pb_clicked()  //登录按钮
 void TcpClient::on_regist_pb_clicked()  //注册按钮
 {
     QString strName = ui->name_le->text();  //获取用户名密码
+
     QString strPwd = ui->pwd_le->text();
     if (!strName.isEmpty() && !strPwd.isEmpty())
     {
+        m_strLoginName = strName;  //保存登录用户名
         PDU* pdu = mkPDU(0);
         pdu->uiMsgType = ENUM_MSG_TYPE_REGIST_REQUEST;            //消息类型：注册请求
         strncpy(pdu->caData, strName.toStdString().c_str(), 32);  //将用户名密码存到caData

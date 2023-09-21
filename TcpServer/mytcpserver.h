@@ -20,6 +20,7 @@ class MyTcpServer : public QTcpServer
     MyTcpServer();
     static MyTcpServer& getInstance();                  //一个静态的mytcpserver对象
     void incomingConnection(qintptr socketDescriptor);  //重载父类虚函数,检测到connect自动调用
+    void resend(const char* pername, PDU* pdu);         //重新发送
 
   public slots:
     void deleteSocket(MyTcpSocket* mysocket);  //删除已有socket
