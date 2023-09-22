@@ -134,49 +134,65 @@ void TcpClient::recvMsg()  //接收数据
                 QMessageBox::information(
                     this, "搜索", QString("%1: offline").arg(OpeWidget::getInstance().getFriend()->m_strSearchName));
             }
-            case ENUM_MSG_TYPE_ADD_FRIEND_REQUEST:  //加好友申请
-            {
-                char caName[32] = {'\0'};
-                strncpy(caName, pdu->caData + 32, 32);  //申请方用户名
-                // qDebug() << "申请方：" << caName << endl;
-                int ret =
-                    QMessageBox::information(this, "添加好友", QString("%1 want to add you as friend ?").arg(caName),
-                                             QMessageBox::Yes, QMessageBox::No);  //弹出提示框
+            break;
+        }
+        case ENUM_MSG_TYPE_ADD_FRIEND_REQUEST:  //加好友申请
+        {
+            char caName[32] = {'\0'};
+            strncpy(caName, pdu->caData + 32, 32);  //申请方用户名
+            // qDebug() << "申请方：" << caName << endl;
+            int ret = QMessageBox::information(this, "添加好友", QString("%1 want to add you as friend ?").arg(caName),
+                                               QMessageBox::Yes, QMessageBox::No);  //弹出提示框
 
-                PDU* respdu = mkPDU(0);                   //回复pdu
-                memcpy(respdu->caData, pdu->caData, 64);  //申请方回复方用户名
-                if (QMessageBox::Yes == ret)              //同意
-                {
-                    respdu->uiMsgType = ENUM_MSG_TYPE_ADD_FRIEND_AGGREE;  //同意加好友
-                }
-                else
-                {
-                    respdu->uiMsgType = ENUM_MSG_TYPE_ADD_FRIEND_REFUSE;  //拒绝加好友
-                }
-                m_tcpSocket.write((char*)respdu, respdu->uiPDULen);  //发给服务器
-                free(respdu);
-                respdu = NULL;
-                break;
-            }
-            case ENUM_MSG_TYPE_ADD_FRIEND_RESPOND:  //加好友回复
+            PDU* respdu = mkPDU(0);                   //回复pdu
+            memcpy(respdu->caData, pdu->caData, 64);  //申请方回复方用户名
+            if (QMessageBox::Yes == ret)              //同意
             {
-                QMessageBox::information(this, "添加好友", pdu->caData);  //提示框
-                break;
+                respdu->uiMsgType = ENUM_MSG_TYPE_ADD_FRIEND_AGGREE;  //同意加好友
             }
-            case ENUM_MSG_TYPE_ADD_FRIEND_AGGREE:  //对方同意加好友
+            else
             {
-                char caPerName[32] = {'\0'};
-                memcpy(caPerName, pdu->caData, 32);                                                    //对方名
-                QMessageBox::information(this, "添加好友", QString("添加%1好友成功").arg(caPerName));  //提示框
-                break;
+                respdu->uiMsgType = ENUM_MSG_TYPE_ADD_FRIEND_REFUSE;  //拒绝加好友
             }
-            case ENUM_MSG_TYPE_ADD_FRIEND_REFUSE:  //对方拒绝加好友
-            {
-                char caPerName[32] = {'\0'};
-                memcpy(caPerName, pdu->caData, 32);
-                QMessageBox::information(this, "添加好友", QString("添加%1好友失败").arg(caPerName));
-                break;
-            }
+            m_tcpSocket.write((char*)respdu, respdu->uiPDULen);  //发给服务器
+            free(respdu);
+            respdu = NULL;
+            break;
+        }
+        case ENUM_MSG_TYPE_ADD_FRIEND_RESPOND:  //加好友回复
+        {
+            QMessageBox::information(this, "添加好友", pdu->caData);  //提示框
+            break;
+        }
+        case ENUM_MSG_TYPE_ADD_FRIEND_AGGREE:  //对方同意加好友
+        {
+            char caPerName[32] = {'\0'};
+            memcpy(caPerName, pdu->caData, 32);                                                    //对方名
+            QMessageBox::information(this, "添加好友", QString("添加%1好友成功").arg(caPerName));  //提示框
+            break;
+        }
+        case ENUM_MSG_TYPE_ADD_FRIEND_REFUSE:  //对方拒绝加好友
+        {
+            char caPerName[32] = {'\0'};
+            memcpy(caPerName, pdu->caData, 32);
+            QMessageBox::information(this, "添加好友", QString("添加%1好友失败").arg(caPerName));
+            break;
+        }
+        case ENUM_MSG_TYPE_FLUSH_FRIEND_RESPOND:  //刷新好友
+        {
+            OpeWidget::getInstance().getFriend()->updateFriendList(pdu);  //传入pdu，刷新
+            break;
+        }
+        case ENUM_MSG_TYPE_DELETE_FRIEND_REQUEST:  //被删除好友通知
+        {
+            char caName[32] = {'\0'};
+            memcpy(caName, pdu->caData, 32);  //对方名字
+            QMessageBox::information(this, "删除好友", QString("%1 删除你作为他的好友").arg(caName));
+            break;
+        }
+        case ENUM_MSG_TYPE_DELETE_FRIEND_RESPOND:  //删除好友回复
+        {
+            QMessageBox::information(this, "删除好友", "删除好友成功");
             break;
         }
         default: break;

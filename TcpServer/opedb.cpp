@@ -190,3 +190,65 @@ void OpeDB::handleAgreeAddFriend(const char* pername, const char* name)  //同�
     QSqlQuery query;
     query.exec(data);
 }
+
+QStringList OpeDB::handleFlushFriend(const char* name)  //处理刷新好友列表
+{
+    QStringList strFriendList;
+    strFriendList.clear();
+
+    if (NULL == name)  //判空
+    {
+        return strFriendList;
+    }
+
+    QString data = QString("select name from usrInfo where online=1 and id in (select id from friend where "
+                           "friendId=(select id from usrInfo where name=\'%1\'))")
+                       .arg(name);  //查询在线好友
+    QSqlQuery query;
+    query.exec(data);
+    while (query.next())
+    {
+        strFriendList.append(query.value(0).toString());
+        // qDebug() << "flush name:" << query.value(0).toString();
+    }
+
+    data = QString("select name from usrInfo where online=1 and id in (select friendId from friend where id=(select id "
+                   "from usrInfo where name=\'%1\'))")  //查询在线好友
+               .arg(name);
+
+    query.exec(data);
+    while (query.next())
+    {
+        strFriendList.append(query.value(0).toString());
+        // qDebug() << "flush name:" << query.value(0).toString();
+    }
+    return strFriendList;
+}
+
+bool OpeDB::handleDelFriend(const char* name, const char* friendName)  //处理删除好友
+{
+    if (NULL == name || NULL == friendName)  //判空
+    {
+        return false;
+    }
+    QString data = QString("delete from friend where id=(select id from usrInfo where name=\'%1\') and "
+                           "friendId=(select id from usrInfo where name=\'%2\')")
+                       .arg(name)
+                       .arg(friendName);  //删除
+    QSqlQuery query;
+    query.exec(data);
+
+    if (query.next())
+        return true;
+
+    data = QString("delete from friend where id=(select id from usrInfo where name=\'%1\') and friendId=(select id "
+                   "from usrInfo where name=\'%2\')")  //删除
+               .arg(friendName)
+               .arg(name);
+    query.exec(data);
+
+    if (query.next())
+        return true;
+
+    return false;
+}

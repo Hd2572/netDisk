@@ -22,18 +22,20 @@ class Friend : public QWidget
   public:
     explicit Friend(QWidget* parent = nullptr);
     void showAllOnlineUsr(PDU* pdu);  //展示在线
+    QListWidget* getFriendList();     //获取好友列表
+    void updateFriendList(PDU* pdu);  //刷新在线好友列表
 
-    QString m_strSearchName;  //查找用户名
+    QString m_strSearchName;  //要查找的查找用户名
 
   signals:
 
   public slots:
-    void showOnline();  //显示/隐藏在线用户
-    void searchUsr();   //查找用户
-                        //    void flushFriend();//刷新好友
-                        //    void delFriend();//删除好友
-                        //    void privateChat();//好友列表
-                        //    void groupChat();//群聊
+    void showOnline();   //显示/隐藏在线用户按钮
+    void searchUsr();    //查找用户按钮
+    void flushFriend();  //刷新好友按钮
+    void delFriend();    //删除好友按钮
+                         //    void privateChat();//好友私聊按钮
+                         //    void groupChat();//群聊按钮
 
   private:
     QTextEdit* m_pShowMsgTE;           //显示信息

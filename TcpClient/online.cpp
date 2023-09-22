@@ -9,6 +9,7 @@ Online::~Online() { delete ui; }
 
 void Online::showUsr(PDU* pdu)  //显示在线
 {
+    ui->online_lw->clear();  //清空已有列表
     if (NULL == pdu)
     {
         return;
@@ -31,6 +32,12 @@ void Online::on_addFriend_pb_clicked()  //添加好友
 
     QString strPerUsrName = pItem->text();                        //用户名
     QString strLoginName = TcpClient::getInstance().loginName();  //自己的用户名
+
+    if (strPerUsrName == strLoginName)
+    {
+        QMessageBox::information(this, "添加好友", "不能添加自己为好友");
+        return;  //不能添加自己
+    }
 
     // qDebug() << "申请方：" << strLoginName << "对方" << strPerUsrName << endl;
 

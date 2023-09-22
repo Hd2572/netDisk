@@ -46,6 +46,8 @@ Friend::Friend(QWidget* parent) : QWidget(parent)
 
     connect(m_pShowOnlineUsrPB, SIGNAL(clicked(bool)), this, SLOT(showOnline()));  //显示在线用户槽
     connect(m_pSearchUsrPB, SIGNAL(clicked(bool)), this, SLOT(searchUsr()));       //搜索用户
+    connect(m_pFlushFriendPB, SIGNAL(clicked(bool)), this, SLOT(flushFriend()));   //刷新好友列表
+    connect(m_pDelFriendPB, SIGNAL(clicked(bool)), this, SLOT(delFriend()));       //删除好友
 }
 
 void Friend::showAllOnlineUsr(PDU* pdu)  //展示在线
@@ -57,7 +59,28 @@ void Friend::showAllOnlineUsr(PDU* pdu)  //展示在线
     m_pOnline->showUsr(pdu);
 }
 
-void Friend::showOnline()  //显示/隐藏在线用户
+QListWidget* Friend::getFriendList()  //获取好友列表
+{
+    return m_pFriendListWidget;
+}
+
+void Friend::updateFriendList(PDU* pdu)  //刷新在线好友列表
+{
+    if (NULL == pdu)  //判空
+    {
+        return;
+    }
+
+    uint uiSize = pdu->uiMsgLen / 32;  //在线人数
+    char caName[32] = {'\0'};
+    for (uint i = 0; i < uiSize; i++)  //接收数据
+    {
+        memcpy(caName, (char*)(pdu->caMsg) + i * 32, 32);
+        m_pFriendListWidget->addItem(caName);
+    }
+}
+
+void Friend::showOnline()  //显示/隐藏在线用户按钮
 {
     if (m_pOnline->isHidden())
     {
@@ -86,6 +109,40 @@ void Friend::searchUsr()  //搜索用户
         pdu->uiMsgType = ENUM_MSG_TYPE_SEARCH_USR_REQUEST;
 
         TcpClient::getInstance().getTcpSocket().write((char*)pdu, pdu->uiPDULen);  //发送pdu
+        free(pdu);
+        pdu = NULL;
+    }
+}
+
+void Friend::flushFriend()  //刷新好友列表按钮
+{
+    m_pFriendListWidget->clear();  //清空当前
+
+    QString strName = TcpClient::getInstance().loginName();  //获取用户名
+
+    PDU* pdu = mkPDU(0);  // pdu
+    pdu->uiMsgType = ENUM_MSG_TYPE_FLUSH_FRIEND_REQUEST;
+    memcpy(pdu->caData, strName.toStdString().c_str(), strName.size());  //写入用户名
+
+    TcpClient::getInstance().getTcpSocket().write((char*)pdu, pdu->uiPDULen);  //发送
+    free(pdu);
+    pdu = NULL;
+}
+
+void Friend::delFriend()  //删除好友按钮
+{
+    if (NULL != m_pFriendListWidget->currentItem())  //当前选中好友
+    {
+        QString strFriendName = m_pFriendListWidget->currentItem()->text();  //好友名字
+
+        PDU* pdu = mkPDU(0);  // pdu
+        pdu->uiMsgType = ENUM_MSG_TYPE_DELETE_FRIEND_REQUEST;
+        QString strSelfName = TcpClient::getInstance().loginName();  //我的名字
+
+        memcpy(pdu->caData, strSelfName.toStdString().c_str(), strSelfName.size());
+        memcpy(pdu->caData + 32, strFriendName.toStdString().c_str(), strFriendName.size());
+
+        TcpClient::getInstance().getTcpSocket().write((char*)pdu, pdu->uiPDULen);  //发送
         free(pdu);
         pdu = NULL;
     }

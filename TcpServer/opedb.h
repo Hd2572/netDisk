@@ -28,8 +28,8 @@ class OpeDB : public QObject
 
     int handleAddFriend(const char* pername, const char* name);        //处理添加好友
     void handleAgreeAddFriend(const char* pername, const char* name);  //同意加好友
-    //    QStringList handleFlushFriend(const char *name);
-    //    bool handleDelFriend(const char *name, const char *friendName);
+    QStringList handleFlushFriend(const char* name);                   //处理刷新好友列表
+    bool handleDelFriend(const char* name, const char* friendName);    //处理删除好友
 
   signals:
 

@@ -196,6 +196,49 @@ void MyTcpSocket::recvMsg()  //接收readyread
             MyTcpServer::getInstance().resend(caName, pdu);  //转发给申请人
             break;
         }
+        case ENUM_MSG_TYPE_FLUSH_FRIEND_REQUEST:  //刷新好友列表
+        {
+            char caName[32] = {'\0'};
+            strncpy(caName, pdu->caData, 32);  //请求方用户名
+
+            QStringList ret = OpeDB::getInstance().handleFlushFriend(caName);  //数据库查询，返回好友列表
+
+            uint uiMsgLen = ret.size() * 32;  //回复pdu大小
+            PDU* respdu = mkPDU(uiMsgLen);
+
+            respdu->uiMsgType = ENUM_MSG_TYPE_FLUSH_FRIEND_RESPOND;
+
+            for (int i = 0; i < ret.size(); i++)  //复制好友用户名
+            {
+                memcpy((char*)(respdu->caMsg) + i * 32, ret.at(i).toStdString().c_str(), ret.at(i).size());
+            }
+
+            write((char*)respdu, respdu->uiPDULen);  //发给客户端
+            free(respdu);
+            respdu = NULL;
+            break;
+        }
+        case ENUM_MSG_TYPE_DELETE_FRIEND_REQUEST:  //删除好友请求
+        {
+            char caSelfName[32] = {'\0'};
+            char caFriendName[32] = {'\0'};
+
+            strncpy(caSelfName, pdu->caData, 32);                            //申请人用户名
+            strncpy(caFriendName, pdu->caData + 32, 32);                     //要删除的好友
+            OpeDB::getInstance().handleDelFriend(caSelfName, caFriendName);  //数据库处理
+
+            PDU* respdu = mkPDU(0);  // pdu
+            respdu->uiMsgType = ENUM_MSG_TYPE_DELETE_FRIEND_RESPOND;
+            strcpy(respdu->caData, DEL_FRIEND_OK);
+
+            write((char*)respdu, respdu->uiPDULen);  //发送
+            free(respdu);
+            respdu = NULL;
+
+            MyTcpServer::getInstance().resend(caFriendName, pdu);  //转发给被删除方，没在线则找不到不转发
+
+            break;
+        }
         default: break;
     }
 

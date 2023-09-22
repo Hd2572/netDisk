@@ -44,6 +44,7 @@ void MyTcpServer::resend(const char* pername, PDU* pdu)  //重新发送
             break;
         }
     }
+    //没找到则退出，不转发
 }
 
 void MyTcpServer::deleteSocket(MyTcpSocket* mysocket)  //删除已有socket
