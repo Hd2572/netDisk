@@ -1,5 +1,6 @@
 #include "tcpclient.h"
 
+#include "privatechat.h"
 #include "ui_tcpclient.h"
 
 TcpClient::TcpClient(QWidget* parent) : QWidget(parent), ui(new Ui::TcpClient)  //构造
@@ -193,6 +194,26 @@ void TcpClient::recvMsg()  //接收数据
         case ENUM_MSG_TYPE_DELETE_FRIEND_RESPOND:  //删除好友回复
         {
             QMessageBox::information(this, "删除好友", "删除好友成功");
+            break;
+        }
+        case ENUM_MSG_TYPE_PRIVATE_CHAT_REQUEST:  //好友私聊
+        {
+            if (PrivateChat::getInstance().isHidden())  //显示私聊窗口
+            {
+                PrivateChat::getInstance().show();
+            }
+            char caSendName[32] = {'\0'};
+            memcpy(caSendName, pdu->caData, 32);  //对方名
+            QString strSendName = caSendName;
+            PrivateChat::getInstance().setChatName(strSendName);  //设置对方名
+
+            PrivateChat::getInstance().updateMsg(pdu);  //更新
+
+            break;
+        }
+        case ENUM_MSG_TYPE_GROUP_CHAT_REQUEST:  //群聊
+        {
+            OpeWidget::getInstance().getFriend()->updateGroupMsg(pdu);  //更新消息
             break;
         }
         default: break;

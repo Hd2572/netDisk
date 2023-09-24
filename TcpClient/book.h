@@ -1,7 +1,14 @@
 #ifndef BOOK_H
 #define BOOK_H
 
+#include <QHBoxLayout>
+#include <QListWidget>
+#include <QPushButton>
+#include <QTimer>
+#include <QVBoxLayout>
 #include <QWidget>
+
+#include "protocol.h"
 
 /*
     图书
@@ -16,6 +23,34 @@ class Book : public QWidget
   signals:
 
   public slots:
+
+  private:
+    QListWidget* m_pBookListW;    //文件名列表
+    QPushButton* m_pReturnPB;     //返回按钮
+    QPushButton* m_pCreateDirPB;  //创建文件夹按钮
+    QPushButton* m_pDelDirPB;     //删除文件夹按钮
+    QPushButton* m_pRenamePB;     //重命名按钮
+    QPushButton* m_pFlushFilePB;  //刷新文件按钮
+    QPushButton* m_pUploadPB;     //上传文件按钮
+    QPushButton* m_pDownLoadPB;   //下载文件按钮
+    QPushButton* m_pDelFilePB;    //删除文件按钮
+    QPushButton* m_pShareFilePB;  //分享文件按钮
+    //    QPushButton* m_pMoveFilePB;   //移动文件按钮
+    //    QPushButton* m_pSelectDirPB;  //目标目录按钮
+
+    //    QString m_strEnterDir;
+    //    QString m_strUploadFilePath;
+
+    //    QTimer* m_pTimer;
+
+    //    QString m_strSaveFilePath;
+    //    bool m_bDownload;
+
+    //    QString m_strShareFileName;
+
+    //    QString m_strMoveFileName;
+    //    QString m_strMoveFilePath;
+    //    QString m_strDestDir;
 };
 
 #endif  // BOOK_H

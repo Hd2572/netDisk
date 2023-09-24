@@ -32,7 +32,8 @@ SOURCES += \
     opewidget.cpp \
     online.cpp \
     friend.cpp \
-    book.cpp
+    book.cpp \
+    privatechat.cpp
 
 HEADERS += \
         tcpclient.h \
@@ -40,11 +41,13 @@ HEADERS += \
     opewidget.h \
     online.h \
     friend.h \
-    book.h
+    book.h \
+    privatechat.h
 
 FORMS += \
         tcpclient.ui \
-    online.ui
+    online.ui \
+    privatechat.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

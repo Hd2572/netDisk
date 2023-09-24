@@ -239,6 +239,32 @@ void MyTcpSocket::recvMsg()  //接收readyread
 
             break;
         }
+        case ENUM_MSG_TYPE_PRIVATE_CHAT_REQUEST:  //好友私聊请求
+        {
+            char caPerName[32] = {'\0'};
+            memcpy(caPerName, pdu->caData + 32, 32);  //目标方名
+            char caName[32] = {'\0'};
+            memcpy(caName, pdu->caData, 32);  //发起方名
+            // qDebug() << caName << "-->" << caPerName << (char*)(pdu->caMsg);
+            MyTcpServer::getInstance().resend(caPerName, pdu);  //如果在线就转发给对方
+
+            break;
+        }
+        case ENUM_MSG_TYPE_GROUP_CHAT_REQUEST:  //群聊消息
+        {
+            char caName[32] = {'\0'};
+            strncpy(caName, pdu->caData, 32);  //发送方名字
+
+            QStringList onlineFriend = OpeDB::getInstance().handleFlushFriend(caName);  //获得好友列表
+
+            QString tmp;
+            for (int i = 0; i < onlineFriend.size(); i++)  //挨个好友转发
+            {
+                tmp = onlineFriend.at(i);
+                MyTcpServer::getInstance().resend(tmp.toStdString().c_str(), pdu);
+            }
+            break;
+        }
         default: break;
     }
 

@@ -24,6 +24,7 @@ class Friend : public QWidget
     void showAllOnlineUsr(PDU* pdu);  //展示在线
     QListWidget* getFriendList();     //获取好友列表
     void updateFriendList(PDU* pdu);  //刷新在线好友列表
+    void updateGroupMsg(PDU* pdu);    //更新群消息
 
     QString m_strSearchName;  //要查找的查找用户名
 
@@ -34,8 +35,8 @@ class Friend : public QWidget
     void searchUsr();    //查找用户按钮
     void flushFriend();  //刷新好友按钮
     void delFriend();    //删除好友按钮
-                         //    void privateChat();//好友私聊按钮
-                         //    void groupChat();//群聊按钮
+    void privateChat();  //好友私聊按钮
+    void groupChat();    //群聊按钮
 
   private:
     QTextEdit* m_pShowMsgTE;           //显示信息
@@ -47,8 +48,8 @@ class Friend : public QWidget
     QPushButton* m_pShowOnlineUsrPB;  //显示在线用户按钮
     QPushButton* m_pSearchUsrPB;      //搜索用户按钮
 
-    QPushButton* m_pMsgSendPB;      //群聊发信息按钮
-    QPushButton* m_pPrivateChatPB;  //私聊发信息按钮
+    QPushButton* m_pMsgSendPB;      //群聊按钮
+    QPushButton* m_pPrivateChatPB;  //私聊按钮
 
     Online* m_pOnline;  // online列表
 };
