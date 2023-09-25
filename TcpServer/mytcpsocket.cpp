@@ -42,6 +42,8 @@ void MyTcpSocket::recvMsg()  //接收readyread
             if (ret)  //成功
             {
                 strcpy(respdu->caData, REGIST_OK);
+                QDir dir;
+                qDebug() << "create dir: " << dir.mkdir(QString("./%1").arg(caName));  //为新用户创建文件夹
             }
             else  //失败
             {
@@ -263,6 +265,87 @@ void MyTcpSocket::recvMsg()  //接收readyread
                 tmp = onlineFriend.at(i);
                 MyTcpServer::getInstance().resend(tmp.toStdString().c_str(), pdu);
             }
+            break;
+        }
+        case ENUM_MSG_TYPE_CREATE_DIR_REQUEST:  //创建文件夹请求
+        {
+            QDir dir;
+            QString strCurPath = QString("%1").arg((char*)(pdu->caMsg));  //当前目录
+            // qDebug() << strCurPath;
+            bool ret = dir.exists(strCurPath);  //是否存在
+            PDU* respdu = NULL;
+
+            if (ret)  //当前目录存在
+            {
+                char caNewDir[32] = {'\0'};
+                memcpy(caNewDir, pdu->caData + 32, 32);
+                QString strNewPath = strCurPath + "/" + caNewDir;  //新建文件夹
+                // qDebug() << strNewPath;
+                ret = dir.exists(strNewPath);
+                // qDebug() << "-->" << ret;
+
+                if (ret)  //创建的文件夹重名
+                {
+                    respdu = mkPDU(0);
+                    respdu->uiMsgType = ENUM_MSG_TYPE_CREATE_DIR_RESPOND;
+                    strcpy(respdu->caData, FILE_NAME_EXIST);
+                }
+                else  //创建的文件夹不存在
+                {
+                    dir.mkdir(strNewPath);  //创建新文件夹
+                    respdu = mkPDU(0);
+                    respdu->uiMsgType = ENUM_MSG_TYPE_CREATE_DIR_RESPOND;
+                    strcpy(respdu->caData, CREAT_DIR_OK);
+                }
+            }
+            else  //当前目录不存在
+            {
+                respdu = mkPDU(0);
+                respdu->uiMsgType = ENUM_MSG_TYPE_CREATE_DIR_RESPOND;
+                strcpy(respdu->caData, DIR_NO_EXIST);
+            }
+            write((char*)respdu, respdu->uiPDULen);  //回复
+            free(respdu);
+            respdu = NULL;
+            break;
+        }
+        case ENUM_MSG_TYPE_FLUSH_FILE_REQUEST:  //刷新文件请求
+        {
+            char* pCurPath = new char[pdu->uiMsgLen];  //当前目录
+            memcpy(pCurPath, pdu->caMsg, pdu->uiMsgLen);
+
+            QDir dir(pCurPath);  //进入目录
+
+            QFileInfoList fileInfoList = dir.entryInfoList();  //文件夹内文件列表
+            int iFileCount = fileInfoList.size();              //文件数
+
+            PDU* respdu = mkPDU(sizeof(FileInfo) * iFileCount);  // pdu
+
+            respdu->uiMsgType = ENUM_MSG_TYPE_FLUSH_FILE_RESPOND;
+            FileInfo* pFileInfo = NULL;
+            QString strFileName;
+
+            for (int i = 0; i < iFileCount; i++)
+            {
+                pFileInfo = (FileInfo*)(respdu->caMsg) + i;
+
+                strFileName = fileInfoList[i].fileName();  //文件名
+
+                memcpy(pFileInfo->caFileName, strFileName.toStdString().c_str(),
+                       strFileName.toUtf8().size());  //写入pdu
+
+                if (fileInfoList[i].isDir())  //是文件夹
+                {
+                    pFileInfo->iFileType = 0;
+                }
+                else if (fileInfoList[i].isFile())  //是文件
+                {
+                    pFileInfo->iFileType = 1;
+                }
+            }
+            write((char*)respdu, respdu->uiPDULen);  //发送
+            free(respdu);
+            respdu = NULL;
             break;
         }
         default: break;

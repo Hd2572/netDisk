@@ -101,6 +101,12 @@ enum ENUM_MSG_TYPE  //消息类型
 
 };
 
+struct FileInfo
+{
+    char caFileName[32];  //文件名字
+    int iFileType;        //文件类型
+};
+
 struct PDU
 {
     uint uiPDULen;    //总协议单元大小

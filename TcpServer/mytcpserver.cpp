@@ -60,5 +60,5 @@ void MyTcpServer::deleteSocket(MyTcpSocket* mysocket)  //删除已有socket
             break;
         }
     }
-    for (int i = 0; i < m_tcpSockeList.size(); i++) { qDebug() << m_tcpSockeList.at(i)->getName(); }  //打印剩余socket
+    // for (int i = 0; i < m_tcpSockeList.size(); i++) { qDebug() << m_tcpSockeList.at(i)->getName(); } //打印剩余socket
 }

@@ -101,6 +101,7 @@ void TcpClient::recvMsg()  //接收数据
         {
             if (strcmp(pdu->caData, LOGIN_OK) == 0)  //弹窗
             {
+                m_strCurPath = QString("./%1").arg(m_strLoginName);  //当前目录为用户根目录
                 QMessageBox::information(this, "登录", LOGIN_OK);
                 OpeWidget::getInstance().show();  //跳转登录成功页面
                 this->hide();                     //隐藏登录界面
@@ -214,6 +215,23 @@ void TcpClient::recvMsg()  //接收数据
         case ENUM_MSG_TYPE_GROUP_CHAT_REQUEST:  //群聊
         {
             OpeWidget::getInstance().getFriend()->updateGroupMsg(pdu);  //更新消息
+            break;
+        }
+        case ENUM_MSG_TYPE_CREATE_DIR_RESPOND:  //创建文件夹回复
+        {
+            QMessageBox::information(this, "创建文件夹", pdu->caData);  //消息弹窗
+            break;
+        }
+        case ENUM_MSG_TYPE_FLUSH_FILE_RESPOND:  //刷新文件回复
+        {
+            OpeWidget::getInstance().getBook()->updateFileList(pdu);  //更新文件列表
+            //            QString strEnterDir = OpeWidget::getInstance().getBook()->enterDir();
+
+            //            if (!strEnterDir.isEmpty())
+            //            {
+            //                m_strCurPath = m_strCurPath + "/" + strEnterDir;
+            //                // qDebug() << "enter dir:" << m_strCurPath;
+            //            }
             break;
         }
         default: break;

@@ -1,6 +1,8 @@
 #ifndef MYTCPSOCKET_H
 #define MYTCPSOCKET_H
 #include <QDebug>
+#include <QDir>
+#include <QFileInfoList>
 #include <QTcpSocket>
 
 #include "opedb.h"

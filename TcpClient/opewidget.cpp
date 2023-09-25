@@ -32,3 +32,8 @@ Friend* OpeWidget::getFriend()  //获得好友页面
 {
     return m_pFriend;
 }
+
+Book* OpeWidget::getBook()  //获得图书界面
+{
+    return m_pBook;
+}
