@@ -9,6 +9,8 @@
 
 Book::Book(QWidget* parent) : QWidget(parent)
 {
+    m_strEnterDir.clear();  //清空进入的路径
+
     m_pBookListW = new QListWidget;  //设置文件列表和按钮
     m_pReturnPB = new QPushButton("返回");
     m_pCreateDirPB = new QPushButton("创建文件夹");
@@ -46,15 +48,12 @@ Book::Book(QWidget* parent) : QWidget(parent)
 
     setLayout(pMain);
 
-    connect(m_pCreateDirPB, SIGNAL(clicked(bool)), this, SLOT(createDir()));  //创建文件夹
-    connect(m_pFlushFilePB, SIGNAL(clicked(bool)), this, SLOT(flushFile()));  //刷新文件列表
-    //    connect(m_pDelDirPB, SIGNAL(clicked(bool)), this, SLOT(delDir()));
-
-    //    connect(m_pRenamePB, SIGNAL(clicked(bool)), this, SLOT(renameFile()));
-
-    //    connect(m_pBookListW, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(enterDir(QModelIndex)));
-
-    //    connect(m_pReturnPB, SIGNAL(clicked(bool)), this, SLOT(returnPre()));
+    connect(m_pCreateDirPB, SIGNAL(clicked(bool)), this, SLOT(createDir()));                       //创建文件夹
+    connect(m_pFlushFilePB, SIGNAL(clicked(bool)), this, SLOT(flushFile()));                       //刷新文件列表
+    connect(m_pDelDirPB, SIGNAL(clicked(bool)), this, SLOT(delDir()));                             //删除文件夹
+    connect(m_pRenamePB, SIGNAL(clicked(bool)), this, SLOT(renameFile()));                         //重命名文件
+    connect(m_pBookListW, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(enterDir(QModelIndex)));  //进入文件夹
+    connect(m_pReturnPB, SIGNAL(clicked(bool)), this, SLOT(returnPre()));                          //返回上一级
 
     //    connect(m_pDelFilePB, SIGNAL(clicked(bool)), this, SLOT(delRegFile()));
 
@@ -98,13 +97,13 @@ void Book::updateFileList(const PDU* pdu)  //更新文件夹列表
     }
 }
 
-// void Book::clearEnterDir() { m_strEnterDir.clear(); }
+void Book::clearEnterDir() { m_strEnterDir.clear(); }  //清空进入的文件路径
 
-// QString Book::enterDir() { return m_strEnterDir; }
+QString Book::enterDir() { return m_strEnterDir; }  //获取进入的文件路径
 
 // void Book::setDownloadStatus(bool status) { m_bDownload = status; }
 
-void Book::createDir()  //创建文件夹
+void Book::createDir()  //创建文件夹按钮
 {
     QString strNewDir = QInputDialog::getText(this, "新建文件夹", "新文件夹名字");  //新文件夹名字
     if (!strNewDir.isEmpty())
@@ -146,4 +145,102 @@ void Book::flushFile()  //刷新文件列表按钮
     TcpClient::getInstance().getTcpSocket().write((char*)pdu, pdu->uiPDULen);  //发送
     free(pdu);
     pdu = NULL;
+}
+
+void Book::delDir()  //删除文件夹按钮
+{
+    QString strCurPath = TcpClient::getInstance().curPath();  //当前路径
+
+    QListWidgetItem* pItem = m_pBookListW->currentItem();  //当前选中
+
+    if (NULL == pItem)  //判空
+    {
+        QMessageBox::warning(this, "删除文件", "请选择要删除的文件");
+    }
+    else
+    {
+        QString strDelName = pItem->text();  //文件夹名
+        PDU* pdu = mkPDU(strCurPath.toUtf8().size() + 1);
+        pdu->uiMsgType = ENUM_MSG_TYPE_DEL_DIR_REQUEST;
+
+        strncpy(pdu->caData, strDelName.toStdString().c_str(), strDelName.toUtf8().size());  //文件夹名
+        memcpy(pdu->caMsg, strCurPath.toStdString().c_str(), strCurPath.toUtf8().size());    //当前目录
+
+        TcpClient::getInstance().getTcpSocket().write((char*)pdu, pdu->uiPDULen);  //发送
+        free(pdu);
+        pdu = NULL;
+    }
+}
+
+void Book::renameFile()  //重命名文件按钮
+{
+    QString strCurPath = TcpClient::getInstance().curPath();  //当前路径
+    QListWidgetItem* pItem = m_pBookListW->currentItem();     //当前选中
+
+    if (NULL == pItem)  //判空
+    {
+        QMessageBox::warning(this, "重命名文件", "请选择要重命名的文件");
+    }
+    else
+    {
+        QString strOldName = pItem->text();                                                  //旧名字
+        QString strNewName = QInputDialog::getText(this, "重命名文件", "请输入新的文件名");  //输入新名字
+
+        if (!strNewName.isEmpty())  //判空
+        {
+            PDU* pdu = mkPDU(strCurPath.toUtf8().size() + 1);  // pdu
+            pdu->uiMsgType = ENUM_MSG_TYPE_RENAME_FILE_REQUEST;
+
+            strncpy(pdu->caData, strOldName.toStdString().c_str(), strOldName.toUtf8().size());       //旧名字
+            strncpy(pdu->caData + 32, strNewName.toStdString().c_str(), strNewName.toUtf8().size());  //新名字
+            memcpy(pdu->caMsg, strCurPath.toStdString().c_str(), strCurPath.toUtf8().size());         //当前路径
+
+            TcpClient::getInstance().getTcpSocket().write((char*)pdu, pdu->uiPDULen);  //发送
+            free(pdu);
+            pdu = NULL;
+        }
+        else
+        {
+            QMessageBox::warning(this, "重命名文件", "新文件名不能为空");
+        }
+    }
+}
+
+void Book::enterDir(const QModelIndex& index)  //进入文件夹按钮
+{
+    QString strDirName = index.data().toString();             //选中项名字
+    m_strEnterDir = strDirName;                               //保存进入的目录
+    QString strCurPath = TcpClient::getInstance().curPath();  //当前路径
+
+    PDU* pdu = mkPDU(strCurPath.toUtf8().size() + 1);
+    pdu->uiMsgType = ENUM_MSG_TYPE_ENTER_DIR_REQUEST;
+    strncpy(pdu->caData, strDirName.toStdString().c_str(), strDirName.toUtf8().size());  //要进入的目录名
+    memcpy(pdu->caMsg, strCurPath.toStdString().c_str(), strCurPath.toUtf8().size());    //当前目录
+
+    TcpClient::getInstance().getTcpSocket().write((char*)pdu, pdu->uiPDULen);  //发送
+    free(pdu);
+    pdu = NULL;
+}
+
+void Book::returnPre()  //返回上一级按钮
+{
+    QString strCurPath = TcpClient::getInstance().curPath();            //当前目录
+    QString strRootPath = "./" + TcpClient::getInstance().loginName();  //根目录
+
+    // qDebug() << strCurPath << strRootPath;
+    if (strCurPath == strRootPath)  //在根目录
+    {
+        QMessageBox::warning(this, "返回", "返回失败：已经在最开始的文件夹目录中");
+    }
+    else
+    {
+        int index = strCurPath.lastIndexOf('/');              //最后一个‘/’的索引
+        strCurPath.remove(index, strCurPath.size() - index);  //去掉最后一级
+        // qDebug() << "return --> " << strCurPath;
+        TcpClient::getInstance().setCurPath(strCurPath);  //设置当前目录
+
+        clearEnterDir();  //清空已进入目录
+
+        flushFile();  //刷新文件列表
+    }
 }

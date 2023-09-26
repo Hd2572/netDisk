@@ -348,6 +348,144 @@ void MyTcpSocket::recvMsg()  //接收readyread
             respdu = NULL;
             break;
         }
+        case ENUM_MSG_TYPE_DEL_DIR_REQUEST:  //删除文件夹请求
+        {
+            char caName[32] = {'\0'};
+            strcpy(caName, pdu->caData);  //删除文件夹名
+
+            char* pPath = new char[pdu->uiMsgLen];
+            memcpy(pPath, pdu->caMsg, pdu->uiMsgLen);
+            QString strPath = QString("%1/%2").arg(pPath).arg(caName);  //删除文件夹路径
+            // qDebug() << strPath;
+
+            QFileInfo fileInfo(strPath);  //创建文件对象
+            bool ret = false;
+
+            if (fileInfo.isDir())  //是文件夹
+            {
+                QDir dir;
+                dir.setPath(strPath);
+                ret = dir.removeRecursively();  //递归删除
+            }
+            else if (fileInfo.isFile())  //常规文件
+            {
+                ret = false;
+            }
+            PDU* respdu = NULL;
+
+            if (ret)  //删除成功
+            {
+                respdu = mkPDU(strlen(DEL_DIR_OK) + 1);
+                respdu->uiMsgType = ENUM_MSG_TYPE_DEL_DIR_RESPOND;
+                memcpy(respdu->caData, DEL_DIR_OK, strlen(DEL_DIR_OK));
+            }
+            else  //失败
+            {
+                respdu = mkPDU(strlen(DEL_DIR_FAILURED) + 1);
+                respdu->uiMsgType = ENUM_MSG_TYPE_DEL_DIR_RESPOND;
+                memcpy(respdu->caData, DEL_DIR_FAILURED, strlen(DEL_DIR_FAILURED));
+            }
+
+            write((char*)respdu, respdu->uiPDULen);  //发送
+            free(respdu);
+            respdu = NULL;
+
+            break;
+        }
+        case ENUM_MSG_TYPE_RENAME_FILE_REQUEST:
+        {
+            char caOldName[32] = {'\0'};
+            char caNewName[32] = {'\0'};
+            strncpy(caOldName, pdu->caData, 32);       //旧名字
+            strncpy(caNewName, pdu->caData + 32, 32);  //新名字
+
+            char* pPath = new char[pdu->uiMsgLen];
+            memcpy(pPath, pdu->caMsg, pdu->uiMsgLen);  //当前路径
+
+            QString strOldPath = QString("%1/%2").arg(pPath).arg(caOldName);  //旧路径
+            QString strNewPath = QString("%1/%2").arg(pPath).arg(caNewName);  //新路径
+
+            //            qDebug() << strOldPath;
+            //            qDebug() << strNewPath;
+
+            QDir dir;
+            bool ret = dir.rename(strOldPath, strNewPath);  //改名
+
+            PDU* respdu = mkPDU(0);
+            respdu->uiMsgType = ENUM_MSG_TYPE_RENAME_FILE_RESPOND;
+            if (ret)  //改成功
+            {
+                strcpy(respdu->caData, RENAME_FILE_OK);
+            }
+            else  //失败，重复名
+            {
+                strcpy(respdu->caData, RENAME_FILE_FAILURED);
+            }
+
+            write((char*)respdu, respdu->uiPDULen);  //发送
+            free(respdu);
+            respdu = NULL;
+
+            break;
+        }
+        case ENUM_MSG_TYPE_ENTER_DIR_REQUEST:  //进入文件夹请求
+        {
+            char caEnterName[32] = {'\0'};
+            strncpy(caEnterName, pdu->caData, 32);  //进入目录名
+
+            char* pPath = new char[pdu->uiMsgLen];
+            memcpy(pPath, pdu->caMsg, pdu->uiMsgLen);  //当前目录
+
+            QString strPath = QString("%1/%2").arg(pPath).arg(caEnterName);  //进入目录
+
+            // qDebug() << strPath;
+
+            QFileInfo fileInfo(strPath);  //文件对象
+            PDU* respdu = NULL;
+            if (fileInfo.isDir())  //是文件夹
+            {
+                QDir dir(strPath);                                 // 进入
+                QFileInfoList fileInfoList = dir.entryInfoList();  //文件列表
+
+                int iFileCount = fileInfoList.size();  //多少文件
+
+                respdu = mkPDU(sizeof(FileInfo) * iFileCount);
+                respdu->uiMsgType = ENUM_MSG_TYPE_FLUSH_FILE_RESPOND;  //刷新回复，下与刷新同
+                FileInfo* pFileInfo = NULL;
+
+                QString strFileName;
+                for (int i = 0; i < iFileCount; i++)
+                {
+                    pFileInfo = (FileInfo*)(respdu->caMsg) + i;
+                    strFileName = fileInfoList[i].fileName();
+
+                    memcpy(pFileInfo->caFileName, strFileName.toStdString().c_str(), strFileName.toUtf8().size());
+                    if (fileInfoList[i].isDir())
+                    {
+                        pFileInfo->iFileType = 0;
+                    }
+                    else if (fileInfoList[i].isFile())
+                    {
+                        pFileInfo->iFileType = 1;
+                    }
+                }
+                write((char*)respdu, respdu->uiPDULen);  //发送
+                free(respdu);
+                respdu = NULL;
+            }
+            else if (fileInfo.isFile())  //是常规文件
+            {
+                respdu = mkPDU(0);
+                respdu->uiMsgType = ENUM_MSG_TYPE_ENTER_DIR_RESPOND;  //进入回复
+                strcpy(respdu->caData, ENTER_DIR_FAILURED);
+
+                write((char*)respdu, respdu->uiPDULen);
+                free(respdu);
+                respdu = NULL;
+            }
+
+            break;
+        }
         default: break;
     }
 

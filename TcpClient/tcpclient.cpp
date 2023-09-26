@@ -224,14 +224,31 @@ void TcpClient::recvMsg()  //接收数据
         }
         case ENUM_MSG_TYPE_FLUSH_FILE_RESPOND:  //刷新文件回复
         {
-            OpeWidget::getInstance().getBook()->updateFileList(pdu);  //更新文件列表
-            //            QString strEnterDir = OpeWidget::getInstance().getBook()->enterDir();
+            OpeWidget::getInstance().getBook()->updateFileList(pdu);               //更新文件列表
+            QString strEnterDir = OpeWidget::getInstance().getBook()->enterDir();  //进入的路径
 
-            //            if (!strEnterDir.isEmpty())
-            //            {
-            //                m_strCurPath = m_strCurPath + "/" + strEnterDir;
-            //                // qDebug() << "enter dir:" << m_strCurPath;
-            //            }
+            if (!strEnterDir.isEmpty())  //不是空
+            {
+                m_strCurPath = m_strCurPath + "/" + strEnterDir;  //更新当前路径
+                // qDebug() << "enter dir:" << m_strCurPath;
+            }
+            OpeWidget::getInstance().getBook()->clearEnterDir();  //清空保存的进入
+            break;
+        }
+        case ENUM_MSG_TYPE_DEL_DIR_RESPOND:  //删除文件夹回复
+        {
+            QMessageBox::information(this, "删除文件夹", pdu->caData);  //删除文件夹回复
+            break;
+        }
+        case ENUM_MSG_TYPE_RENAME_FILE_RESPOND:  //重命名文件回复
+        {
+            QMessageBox::information(this, "重命名文件", pdu->caData);  //重命名文件回复
+            break;
+        }
+        case ENUM_MSG_TYPE_ENTER_DIR_RESPOND:  //进入文件夹回复
+        {
+            OpeWidget::getInstance().getBook()->clearEnterDir();  //清空进入的目录
+            QMessageBox::information(this, "进入文件夹", pdu->caData);
             break;
         }
         default: break;

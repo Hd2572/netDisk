@@ -20,8 +20,8 @@ class Book : public QWidget
   public:
     explicit Book(QWidget* parent = nullptr);
     void updateFileList(const PDU* pdu);  //更新文件列表
-                                          //    void clearEnterDir();
-                                          //    QString enterDir();
+    void clearEnterDir();                 //清空进入的文件路径
+    QString enterDir();                   //获取进入的文件路径
                                           //    void setDownloadStatus(bool status);
                                           //    bool getDownloadStatus();
                                           //    QString getSaveFilePath();
@@ -33,14 +33,14 @@ class Book : public QWidget
   signals:
 
   public slots:
-    void createDir();  //创建文件夹
-    void flushFile();  //刷新文件列表
-                       //    void delDir();
-                       //    void renameFile();
-                       //    void enterDir(const QModelIndex& index);
-                       //    void returnPre();
-                       //    void delRegFile();
-                       //    void uploadFile();
+    void createDir();                         //创建文件夹按钮
+    void flushFile();                         //刷新文件列表
+    void delDir();                            //删除文件夹按钮
+    void renameFile();                        //重命名文件按钮
+    void enterDir(const QModelIndex& index);  //双击进入文件夹按钮
+    void returnPre();                         //返回上一级按钮
+                                              //    void delRegFile();
+                                              //    void uploadFile();
 
     //    void uploadFileData();
 
@@ -64,7 +64,7 @@ class Book : public QWidget
     //    QPushButton* m_pMoveFilePB;   //移动文件按钮
     //    QPushButton* m_pSelectDirPB;  //目标目录按钮
 
-    QString m_strEnterDir;
+    QString m_strEnterDir;  //进入的目录
     //    QString m_strUploadFilePath;
 
     //    QTimer* m_pTimer;

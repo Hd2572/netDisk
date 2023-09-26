@@ -32,6 +32,25 @@ typedef unsigned int uint;
 #define FILE_NAME_EXIST "file name exist"  //文件夹重名
 #define CREAT_DIR_OK "create dir ok"       //创建文件夹成功
 
+#define DEL_DIR_OK "delete dir ok"                               //删除文件夹成功
+#define DEL_DIR_FAILURED "delete dir failured: is reguler file"  //删除失败是常规文件
+
+#define RENAME_FILE_OK "rename file ok"              //重命名成功
+#define RENAME_FILE_FAILURED "rename file failured"  //重命名失败
+
+#define ENTER_DIR_FAILURED "enter dir failured: is reguler file"  //进入文件夹失败，是常规文件
+
+#define DEL_FILE_OK "delete file ok"                           //删除常规文件常规
+#define DEL_FILE_FAILURED "delete file failured: is diretory"  //删除常规文件失败，是文件夹
+
+#define UPLOAD_FILE_OK "upload file ok"              //上传文件成功
+#define UPLOAD_FILE_FAILURED "upload file failured"  //上传文件失败
+
+#define MOVE_FILE_OK "move file ok"
+#define MOVE_FILE_FAILURED "move file failured:is reguler file"
+
+#define COMMON_ERR "operate failed: system is busy"  //系统忙
+
 enum ENUM_MSG_TYPE  //消息类型
 {
     ENUM_MSG_TYPE_MIN = 0,
