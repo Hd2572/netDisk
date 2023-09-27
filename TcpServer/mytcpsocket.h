@@ -2,8 +2,10 @@
 #define MYTCPSOCKET_H
 #include <QDebug>
 #include <QDir>
+#include <QFile>
 #include <QFileInfoList>
 #include <QTcpSocket>
+#include <QTimer>
 
 #include "opedb.h"
 #include "protocol.h"
@@ -23,6 +25,12 @@ class MyTcpSocket : public QTcpSocket
 
   private:
     QString m_strName;  //该socket对应的客户端用户名
+    QFile m_file;       //文件
+    qint64 m_iTotal;    //文件大小
+    qint64 m_iRecved;   //已经接收多少
+    bool m_bUpload;     //是否正在上传文件
+
+    QTimer* m_pTimer;
 };
 
 #endif  // MYTCPSOCKET_H

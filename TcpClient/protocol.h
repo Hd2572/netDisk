@@ -39,7 +39,7 @@ typedef unsigned int uint;
 
 #define ENTER_DIR_FAILURED "enter dir failured: is reguler file"  //进入文件夹失败，是常规文件
 
-#define DEL_FILE_OK "delete file ok"                           //删除常规文件常规
+#define DEL_FILE_OK "delete file ok"                           //删除常规文件成功
 #define DEL_FILE_FAILURED "delete file failured: is diretory"  //删除常规文件失败，是文件夹
 
 #define UPLOAD_FILE_OK "upload file ok"              //上传文件成功

@@ -251,6 +251,16 @@ void TcpClient::recvMsg()  //接收数据
             QMessageBox::information(this, "进入文件夹", pdu->caData);
             break;
         }
+        case ENUM_MSG_TYPE_DEL_FILE_RESPOND:  //删除常规文件回复
+        {
+            QMessageBox::information(this, "删除文件", pdu->caData);
+            break;
+        }
+        case ENUM_MSG_TYPE_UPLOAD_FILE_RESPOND:  //上传文件回复
+        {
+            QMessageBox::information(this, "上传文件", pdu->caData);
+            break;
+        }
         default: break;
     }
 

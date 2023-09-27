@@ -39,10 +39,10 @@ class Book : public QWidget
     void renameFile();                        //重命名文件按钮
     void enterDir(const QModelIndex& index);  //双击进入文件夹按钮
     void returnPre();                         //返回上一级按钮
-                                              //    void delRegFile();
-                                              //    void uploadFile();
+    void delRegFile();                        //删除常规文件按钮
+    void uploadFile();                        //上传文件按钮
 
-    //    void uploadFileData();
+    void uploadFileData();  //上传文件数据
 
     //    void downloadFile();
 
@@ -64,10 +64,10 @@ class Book : public QWidget
     //    QPushButton* m_pMoveFilePB;   //移动文件按钮
     //    QPushButton* m_pSelectDirPB;  //目标目录按钮
 
-    QString m_strEnterDir;  //进入的目录
-    //    QString m_strUploadFilePath;
+    QString m_strEnterDir;        //进入的目录
+    QString m_strUploadFilePath;  //上传文件的路径
 
-    //    QTimer* m_pTimer;
+    QTimer* m_pTimer;  //传文件定时器
 
     //    QString m_strSaveFilePath;
     //    bool m_bDownload;

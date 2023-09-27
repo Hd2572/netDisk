@@ -19,7 +19,7 @@ void MyTcpServer::incomingConnection(qintptr socketDescriptor)  //有连接自�
     //    QThread* thread = new QThread();                                    // 1
     //    connect(pTcpSocket, SIGNAL(disconnected()), thread, SLOT(quit()));  // 2
 
-    connect(pTcpSocket, SIGNAL(offline(MyTcpSocket*)), this, SLOT(deleteSocket(MyTcpSocket*)));  //关联下线
+    connect(pTcpSocket, SIGNAL(offline(MyTcpSocket*)), this, SLOT(deleteSocket(MyTcpSocket*)));  //客户端下线
 
     //    pTcpSocket->moveToThread(thread);  // 3
 

@@ -11,6 +11,8 @@ Book::Book(QWidget* parent) : QWidget(parent)
 {
     m_strEnterDir.clear();  //清空进入的路径
 
+    m_pTimer = new QTimer;  //计时器
+
     m_pBookListW = new QListWidget;  //设置文件列表和按钮
     m_pReturnPB = new QPushButton("返回");
     m_pCreateDirPB = new QPushButton("创建文件夹");
@@ -54,12 +56,9 @@ Book::Book(QWidget* parent) : QWidget(parent)
     connect(m_pRenamePB, SIGNAL(clicked(bool)), this, SLOT(renameFile()));                         //重命名文件
     connect(m_pBookListW, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(enterDir(QModelIndex)));  //进入文件夹
     connect(m_pReturnPB, SIGNAL(clicked(bool)), this, SLOT(returnPre()));                          //返回上一级
-
-    //    connect(m_pDelFilePB, SIGNAL(clicked(bool)), this, SLOT(delRegFile()));
-
-    //    connect(m_pUploadPB, SIGNAL(clicked(bool)), this, SLOT(uploadFile()));
-
-    //    connect(m_pTimer, SIGNAL(timeout()), this, SLOT(uploadFileData()));
+    connect(m_pDelFilePB, SIGNAL(clicked(bool)), this, SLOT(delRegFile()));                        //删除常规文件
+    connect(m_pUploadPB, SIGNAL(clicked(bool)), this, SLOT(uploadFile()));                         //上传文件按钮
+    connect(m_pTimer, SIGNAL(timeout()), this, SLOT(uploadFileData()));                            //上传文件数据
 
     //    connect(m_pDownLoadPB, SIGNAL(clicked(bool)), this, SLOT(downloadFile()));
 
@@ -243,4 +242,92 @@ void Book::returnPre()  //返回上一级按钮
 
         flushFile();  //刷新文件列表
     }
+}
+
+void Book::delRegFile()  //删除常规文件按钮
+{
+    QString strCurPath = TcpClient::getInstance().curPath();  //当前路径
+    QListWidgetItem* pItem = m_pBookListW->currentItem();     //选中文件
+    if (NULL == pItem)
+    {
+        QMessageBox::warning(this, "删除文件", "请选择要删除的文件");
+    }
+    else
+    {
+        QString strDelName = pItem->text();  //文件名
+
+        PDU* pdu = mkPDU(strCurPath.toUtf8().size() + 1);
+        pdu->uiMsgType = ENUM_MSG_TYPE_DEL_FILE_REQUEST;
+        strncpy(pdu->caData, strDelName.toStdString().c_str(), strDelName.toUtf8().size());  //删除文件名
+        memcpy(pdu->caMsg, strCurPath.toStdString().c_str(), strCurPath.toUtf8().size());    //当前路径
+        TcpClient::getInstance().getTcpSocket().write((char*)pdu, pdu->uiPDULen);            //发送
+        free(pdu);
+        pdu = NULL;
+    }
+}
+
+void Book::uploadFile()  //上传文件按钮
+{
+    m_strUploadFilePath = QFileDialog::getOpenFileName();  //打开对话框，获取要上传文件的路径
+    // qDebug() << m_strUploadFilePath;
+    if (!m_strUploadFilePath.isEmpty())  //判空
+    {
+        int index = m_strUploadFilePath.lastIndexOf('/');  //最后一个‘/’的索引
+        QString strFileName = m_strUploadFilePath.right(m_strUploadFilePath.size() - index - 1);  //获取文件名
+        // qDebug() << strFileName;
+
+        QFile file(m_strUploadFilePath);  //创建文件对象
+        qint64 fileSize = file.size();    //获得文件大小
+
+        QString strCurPath = TcpClient::getInstance().curPath();  //当前路径
+
+        PDU* pdu = mkPDU(strCurPath.toUtf8().size() + 1);  // pdu
+        pdu->uiMsgType = ENUM_MSG_TYPE_UPLOAD_FILE_REQUEST;
+        memcpy(pdu->caMsg, strCurPath.toStdString().c_str(), strCurPath.toUtf8().size());  //当前路径
+        sprintf(pdu->caData, "%s %lld", strFileName.toStdString().c_str(), fileSize);      //文件名和文件大小
+
+        TcpClient::getInstance().getTcpSocket().write((char*)pdu, pdu->uiPDULen);  //发送
+        free(pdu);
+        pdu = NULL;
+
+        m_pTimer->start(1000);  //启动计时器等待1s，防止粘包
+    }
+    else
+    {
+        QMessageBox::warning(this, "上传文件", "上传文件名字不能为空");
+    }
+}
+
+void Book::uploadFileData()  //计时器超时后上传数据
+{
+    m_pTimer->stop();                     //关掉计时器
+    QFile file(m_strUploadFilePath);      //要上传的文件
+    if (!file.open(QIODevice::ReadOnly))  //只读打开
+    {
+        QMessageBox::warning(this, "上传文件", "打开文件失败");
+        return;
+    }
+
+    char* pBuffer = new char[4096];  //发送缓冲区
+    qint64 ret = 0;
+    while (true)  //读取文件内容发送
+    {
+        ret = file.read(pBuffer, 4096);  //每次读这么多
+        if (ret > 0 && ret <= 4096)      //读到数据大小正常
+        {
+            TcpClient::getInstance().getTcpSocket().write(pBuffer, ret);  //发送
+        }
+        else if (0 == ret)  //没东西了
+        {
+            break;
+        }
+        else  //错误
+        {
+            QMessageBox::warning(this, "上传文件", "上传文件失败:读文件失败");
+            break;
+        }
+    }
+    file.close();  //关闭文件
+    delete[] pBuffer;
+    pBuffer = NULL;
 }
