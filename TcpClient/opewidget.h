@@ -7,6 +7,7 @@
 
 #include "book.h"
 #include "friend.h"
+#include "sharefile.h"
 
 /*
     窗口操作

@@ -6,7 +6,7 @@ OpeWidget::OpeWidget(QWidget* parent) : QWidget(parent)
     m_pListW->addItem("好友");
     m_pListW->addItem("图书");
 
-    m_pFriend = new Friend;  //创建好友、图书窗口
+    m_pFriend = new Friend;  //创建好友、图书等窗口
     m_pBook = new Book;
 
     m_pSW = new QStackedWidget;  //堆栈窗口

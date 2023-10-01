@@ -8,11 +8,47 @@ MyTcpSocket::MyTcpSocket()
     connect(this, SIGNAL(disconnected()), this, SLOT(clientOffline()));  //关联客户端下线槽
 
     m_bUpload = false;  //初始不在上传文件状态
+
+    m_pTimer = new QTimer;                                                 //定时器
+    connect(m_pTimer, SIGNAL(timeout()), this, SLOT(sendFileToClient()));  //定时器超时开始发送文件
 }
 
 QString MyTcpSocket::getName()  //获取用户名
 {
     return m_strName;
+}
+
+void MyTcpSocket::copyDir(QString strSrcDir, QString strDestDir)  //拷贝文件夹
+{
+    QDir dir;
+    dir.mkdir(strDestDir);  //创建目标文件
+
+    dir.setPath(strSrcDir);                            //源路径
+    QFileInfoList fileInfoList = dir.entryInfoList();  //文件夹内容
+
+    QString srcTmp;
+    QString destTmp;
+    for (int i = 0; i < fileInfoList.size(); i++)
+    {
+        // qDebug() << "fileName:" << fileInfoList[i].fileName();
+        if (fileInfoList[i].isFile())  //是文件
+        {
+            srcTmp = strSrcDir + '/' + fileInfoList[i].fileName();
+            destTmp = strDestDir + '/' + fileInfoList[i].fileName();
+            QFile::copy(srcTmp, destTmp);  //拷贝
+        }
+        else if (fileInfoList[i].isDir())  //是文件夹
+        {
+            if (QString(".") == fileInfoList[i].fileName() ||
+                QString("..") == fileInfoList[i].fileName())  //跳过隐藏配置文件
+            {
+                continue;
+            }
+            srcTmp = strSrcDir + '/' + fileInfoList[i].fileName();
+            destTmp = strDestDir + '/' + fileInfoList[i].fileName();
+            copyDir(srcTmp, destTmp);  //递归拷贝
+        }
+    }
 }
 
 void MyTcpSocket::recvMsg()  //接收readyread
@@ -569,6 +605,84 @@ void MyTcpSocket::recvMsg()  //接收readyread
 
                 break;
             }
+            case ENUM_MSG_TYPE_DOWNLOAD_FILE_REQUEST:  //下载文件请求
+            {
+                char caFileName[32] = {'\0'};
+                strcpy(caFileName, pdu->caData);  //要下载文件名
+
+                char* pPath = new char[pdu->uiMsgLen];
+                memcpy(pPath, pdu->caMsg, pdu->uiMsgLen);                       //当前路径
+                QString strPath = QString("%1/%2").arg(pPath).arg(caFileName);  //拼接路径
+                // qDebug() << strPath;
+                delete[] pPath;
+                pPath = NULL;
+
+                QFileInfo fileInfo(strPath);        //创建文件对象
+                qint64 fileSize = fileInfo.size();  //文件大小
+                PDU* respdu = mkPDU(0);
+                respdu->uiMsgType = ENUM_MSG_TYPE_DOWNLOAD_FILE_RESPOND;
+                sprintf(respdu->caData, "%s %lld", caFileName, fileSize);  //回复文件名和大小
+
+                write((char*)respdu, respdu->uiPDULen);  //发送
+                free(respdu);
+                respdu = NULL;
+
+                m_file.setFileName(strPath);       //设置文件操作对象
+                m_file.open(QIODevice::ReadOnly);  //只读打开
+                m_pTimer->start(1000);             //设置计时器防止黏包
+
+                break;
+            }
+            case ENUM_MSG_TYPE_SHARE_FILE_REQUEST:
+            {
+                char caSendName[32] = {'\0'};
+                int num = 0;
+                sscanf(pdu->caData, "%s%d", caSendName, &num);  //发送方名字，几个人
+                int size = num * 32;
+                PDU* respdu = mkPDU(pdu->uiMsgLen - size);
+                respdu->uiMsgType = ENUM_MSG_TYPE_SHARE_FILE_NOTE;
+
+                strcpy(respdu->caData, caSendName);                                       //发送方名字
+                memcpy(respdu->caMsg, (char*)(pdu->caMsg) + size, pdu->uiMsgLen - size);  //分享文件路径
+
+                char caRecvName[32] = {'\0'};
+                for (int i = 0; i < num; i++)
+                {
+                    memcpy(caRecvName, (char*)(pdu->caMsg) + i * 32, 32);  //发送给各个好友发送方名/文件路径
+                    MyTcpServer::getInstance().resend(caRecvName, respdu);
+                }
+                free(respdu);
+                respdu = NULL;
+
+                respdu = mkPDU(0);
+                respdu->uiMsgType = ENUM_MSG_TYPE_SHARE_FILE_RESPOND;
+                strcpy(respdu->caData, "share file ok");
+                write((char*)respdu, respdu->uiPDULen);  //回复
+                free(respdu);
+                respdu = NULL;
+
+                break;
+            }
+            case ENUM_MSG_TYPE_SHARE_FILE_NOTE_RESPOND:  //分享请求回复
+            {
+                QString strRecvPath = QString("./%1").arg(pdu->caData);             //接受者根目录
+                QString strShareFilePath = QString("%1").arg((char*)(pdu->caMsg));  //分享文件目录
+
+                int index = strShareFilePath.lastIndexOf('/');                                      //最后一个’/'
+                QString strFileName = strShareFilePath.right(strShareFilePath.size() - index - 1);  //文件名
+                strRecvPath = strRecvPath + '/' + strFileName;                                      //拼接接受路径
+
+                QFileInfo fileInfo(strShareFilePath);  //生成对象
+                if (fileInfo.isFile())                 //常规文件
+                {
+                    QFile::copy(strShareFilePath, strRecvPath);
+                }
+                else if (fileInfo.isDir())  //文件夹
+                {
+                    copyDir(strShareFilePath, strRecvPath);
+                }
+                break;
+            }
             default: break;
         }
 
@@ -613,4 +727,32 @@ void MyTcpSocket::clientOffline()  //客户端下线
 {
     OpeDB::getInstance().handleOffline(m_strName.toStdString().c_str());  //更改在线状态
     emit offline(this);                                                   //发送下线信号
+}
+
+void MyTcpSocket::sendFileToClient()  //发送文件给客户端
+{
+    m_pTimer->stop();              //关掉计时器
+    char* pData = new char[4096];  //一次发这么多
+    qint64 ret = 0;
+    while (true)
+    {
+        ret = m_file.read(pData, 4096);  //读文件数据
+        if (ret > 0 && ret <= 4096)      //大小正常
+        {
+            write(pData, ret);  //发给客户端
+        }
+        else if (0 == ret)  //发完了
+        {
+            m_file.close();  //关文件
+            break;
+        }
+        else if (ret < 0)  //出错了
+        {
+            qDebug() << "发送文件内容给客户端过程中失败";
+            m_file.close();  //关文件
+            break;
+        }
+    }
+    delete[] pData;
+    pData = NULL;
 }

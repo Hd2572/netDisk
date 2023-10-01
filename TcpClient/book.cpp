@@ -5,11 +5,14 @@
 #include <QMessageBox>
 
 #include "opewidget.h"
+#include "sharefile.h"
 #include "tcpclient.h"
 
 Book::Book(QWidget* parent) : QWidget(parent)
 {
     m_strEnterDir.clear();  //清空进入的路径
+
+    m_bDownload = false;  //初始不在下载状态
 
     m_pTimer = new QTimer;  //计时器
 
@@ -59,10 +62,8 @@ Book::Book(QWidget* parent) : QWidget(parent)
     connect(m_pDelFilePB, SIGNAL(clicked(bool)), this, SLOT(delRegFile()));                        //删除常规文件
     connect(m_pUploadPB, SIGNAL(clicked(bool)), this, SLOT(uploadFile()));                         //上传文件按钮
     connect(m_pTimer, SIGNAL(timeout()), this, SLOT(uploadFileData()));                            //上传文件数据
-
-    //    connect(m_pDownLoadPB, SIGNAL(clicked(bool)), this, SLOT(downloadFile()));
-
-    //    connect(m_pShareFilePB, SIGNAL(clicked(bool)), this, SLOT(shareFile()));
+    connect(m_pDownLoadPB, SIGNAL(clicked(bool)), this, SLOT(downloadFile()));                     //下载文件按钮
+    connect(m_pShareFilePB, SIGNAL(clicked(bool)), this, SLOT(shareFile()));                       //分享文件
 }
 
 void Book::updateFileList(const PDU* pdu)  //更新文件夹列表
@@ -96,11 +97,34 @@ void Book::updateFileList(const PDU* pdu)  //更新文件夹列表
     }
 }
 
-void Book::clearEnterDir() { m_strEnterDir.clear(); }  //清空进入的文件路径
+void Book::clearEnterDir()  //清空进入的文件路径
+{
+    m_strEnterDir.clear();
+}
 
-QString Book::enterDir() { return m_strEnterDir; }  //获取进入的文件路径
+QString Book::enterDir()  //获取进入的文件路径
+{
+    return m_strEnterDir;
+}
 
-// void Book::setDownloadStatus(bool status) { m_bDownload = status; }
+void Book::setDownloadStatus(bool status)  //设置下载状态
+{
+    m_bDownload = status;
+}
+
+bool Book::getDownloadStatus()  //获取下载状态
+{
+    return m_bDownload;
+}
+QString Book::getSaveFilePath()  //获取保存文件路径
+{
+    return m_strSaveFilePath;
+}
+
+QString Book::getShareFileName()  //获取分享文件名
+{
+    return m_strShareFileName;
+}
 
 void Book::createDir()  //创建文件夹按钮
 {
@@ -330,4 +354,61 @@ void Book::uploadFileData()  //计时器超时后上传数据
     file.close();  //关闭文件
     delete[] pBuffer;
     pBuffer = NULL;
+}
+
+void Book::downloadFile()  //下载文件按钮
+{
+    QListWidgetItem* pItem = m_pBookListW->currentItem();  //当前选择的文件
+    if (NULL == pItem)                                     //判空
+    {
+        QMessageBox::warning(this, "下载文件", "请选择要下载的文件");
+    }
+    else
+    {
+        QString strSaveFilePath = QFileDialog::getSaveFileName();  //选择保存路径窗口
+        if (strSaveFilePath.isEmpty())                             //判空
+        {
+            QMessageBox::warning(this, "下载文件", "请指定要保存的位置");
+            m_strSaveFilePath.clear();  //清空之前的保存路径
+        }
+        else
+        {
+            m_strSaveFilePath = strSaveFilePath;  //更新保存路径
+        }
+
+        QString strCurPath = TcpClient::getInstance().curPath();  //当前路径
+
+        PDU* pdu = mkPDU(strCurPath.toUtf8().size() + 1);  // pdu
+        pdu->uiMsgType = ENUM_MSG_TYPE_DOWNLOAD_FILE_REQUEST;
+        QString strFileName = pItem->text();                                               //选中文件名
+        strcpy(pdu->caData, strFileName.toStdString().c_str());                            //文件名
+        memcpy(pdu->caMsg, strCurPath.toStdString().c_str(), strCurPath.toUtf8().size());  //当前路径
+
+        TcpClient::getInstance().getTcpSocket().write((char*)pdu, pdu->uiPDULen);  //发送
+    }
+}
+
+void Book::shareFile()  //分享文件按钮
+{
+    QListWidgetItem* pItem = m_pBookListW->currentItem();  //当前选中文件
+    if (NULL == pItem)                                     //判空
+    {
+        QMessageBox::warning(this, "分享文件", "请选择要分享的文件");
+        return;
+    }
+    else
+    {
+        m_strShareFileName = pItem->text();  //分享文件名
+    }
+
+    Friend* pFriend = OpeWidget::getInstance().getFriend();  //获取当前好友窗口
+    QListWidget* pFriendList = pFriend->getFriendList();     //获取好友列表
+
+    // qDebug() << "bookupdate" << pFriendList->count() << endl;
+
+    ShareFile::getInstance().updateFriend(pFriendList);  //更新分享窗口的好友列表
+    if (ShareFile::getInstance().isHidden())             //打开分享窗口
+    {
+        ShareFile::getInstance().show();
+    }
 }

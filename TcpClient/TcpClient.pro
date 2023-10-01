@@ -33,7 +33,8 @@ SOURCES += \
     online.cpp \
     friend.cpp \
     book.cpp \
-    privatechat.cpp
+    privatechat.cpp \
+    sharefile.cpp
 
 HEADERS += \
         tcpclient.h \
@@ -42,7 +43,8 @@ HEADERS += \
     online.h \
     friend.h \
     book.h \
-    privatechat.h
+    privatechat.h \
+    sharefile.h
 
 FORMS += \
         tcpclient.ui \

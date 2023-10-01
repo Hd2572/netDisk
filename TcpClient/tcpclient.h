@@ -60,7 +60,7 @@ class TcpClient : public QWidget
     QString m_strLoginName;  //我的用户名
 
     QString m_strCurPath;  //当前路径
-    QFile m_file;
+    QFile m_file;          //操作的文件对象
 };
 
 #endif  // TCPCLIENT_H
