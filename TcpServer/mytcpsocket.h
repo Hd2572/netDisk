@@ -9,6 +9,11 @@
 
 #include "opedb.h"
 #include "protocol.h"
+/*
+自定义tcpsocket
+
+*/
+
 class MyTcpSocket : public QTcpSocket
 {
     Q_OBJECT

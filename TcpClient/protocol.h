@@ -45,8 +45,8 @@ typedef unsigned int uint;
 #define UPLOAD_FILE_OK "upload file ok"              //上传文件成功
 #define UPLOAD_FILE_FAILURED "upload file failured"  //上传文件失败
 
-#define MOVE_FILE_OK "move file ok"
-#define MOVE_FILE_FAILURED "move file failured:is reguler file"
+#define MOVE_FILE_OK "move file ok"                              //移动文件夹成功
+#define MOVE_FILE_FAILURED "move file failured:is reguler file"  //移动失败，是常规文件
 
 #define COMMON_ERR "operate failed: system is busy"  //系统忙
 

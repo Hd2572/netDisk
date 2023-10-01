@@ -683,6 +683,52 @@ void MyTcpSocket::recvMsg()  //接收readyread
                 }
                 break;
             }
+            case ENUM_MSG_TYPE_MOVE_FILE_REQUEST:
+            {
+                char caFileName[32] = {'\0'};
+                int srcLen = 0;
+                int destLen = 0;
+                sscanf(pdu->caData, "%d%d%s", &srcLen, &destLen, caFileName);  //获取原/目标路径长度与文件名
+
+                char* pSrcPath = new char[srcLen + 1];
+                char* pDestPath = new char[destLen + 1 + 32];  //多32来存文件名
+                memset(pSrcPath, '\0', srcLen + 1);
+                memset(pDestPath, '\0', destLen + 1 + 32);
+
+                memcpy(pSrcPath, pdu->caMsg, srcLen);                            //原路径
+                memcpy(pDestPath, (char*)(pdu->caMsg) + (srcLen + 1), destLen);  //目标路径
+
+                PDU* respdu = mkPDU(0);
+                respdu->uiMsgType = ENUM_MSG_TYPE_MOVE_FILE_RESPOND;
+                QFileInfo fileInfo(pDestPath);  //目标路径文件对象
+                if (fileInfo.isDir())           //是文件夹
+                {
+                    strcat(pDestPath, "/");
+                    strcat(pDestPath, caFileName);  //拼接目标路径
+
+                    bool ret = QFile::rename(pSrcPath, pDestPath);  //移动
+                    if (ret)
+                    {
+                        strcpy(respdu->caData, MOVE_FILE_OK);
+                    }
+                    else
+                    {
+                        strcpy(respdu->caData, COMMON_ERR);
+                    }
+                }
+                else if (fileInfo.isFile())  //是常规文件
+                {
+                    strcpy(respdu->caData, MOVE_FILE_FAILURED);
+                }
+
+                write((char*)respdu, respdu->uiPDULen);  //回复
+                free(respdu);
+                respdu = NULL;
+                delete[] pSrcPath;
+                delete[] pDestPath;
+
+                break;
+            }
             default: break;
         }
 

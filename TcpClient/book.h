@@ -45,9 +45,9 @@ class Book : public QWidget
     void uploadFileData();  //上传文件数据
     void downloadFile();    //下载文件按钮
 
-    void shareFile();  //分享文件按钮
-                       //    void moveFile();
-                       //    void selectDestDir();
+    void shareFile();      //分享文件按钮
+    void moveFile();       //文件移动按钮
+    void selectDestDir();  //选择目标文件路径
 
   private:
     QListWidget* m_pBookListW;    //文件名列表
@@ -60,8 +60,8 @@ class Book : public QWidget
     QPushButton* m_pDownLoadPB;   //下载文件按钮
     QPushButton* m_pDelFilePB;    //删除文件按钮
     QPushButton* m_pShareFilePB;  //分享文件按钮
-    //    QPushButton* m_pMoveFilePB;   //移动文件按钮
-    //    QPushButton* m_pSelectDirPB;  //目标目录按钮
+    QPushButton* m_pMoveFilePB;   //移动文件按钮
+    QPushButton* m_pSelectDirPB;  //选择目标目录按钮
 
     QString m_strEnterDir;        //进入的目录
     QString m_strUploadFilePath;  //上传文件的路径
@@ -73,9 +73,9 @@ class Book : public QWidget
 
     QString m_strShareFileName;  //分享文件名
 
-    //    QString m_strMoveFileName;
-    //    QString m_strMoveFilePath;
-    //    QString m_strDestDir;
+    QString m_strMoveFileName;  //移动文件名
+    QString m_strMoveFilePath;  //移动文件路径
+    QString m_strDestDir;       //移动目标路径
 };
 
 #endif  // BOOK_H
